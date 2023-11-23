@@ -1,5 +1,5 @@
 import { Router } from "express";
-import * as method from "../user/user.controller.js";
+import * as method from "./user.controller.js";
 import { validation } from "../../middleware/validation.js";
 import * as dataValidation from "./user.validation.js";
 import { userAuthentication } from "../../middleware/user.auth.js";
@@ -49,5 +49,9 @@ authRouter.put(
 authRouter.get(
     "/logout",
     method.logout
+);
+authRouter.get(
+  "/delete-account",
+  method.deleteAccount
 );
 export default authRouter;

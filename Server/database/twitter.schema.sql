@@ -18,12 +18,25 @@ CREATE TABLE users (
     password_changed_at DATETIME,
     create_code_time DATETIME
 );
-use twitter_db;
 
-drop table users;
-use twitter_db;
-
-SELECT * FROM users;
-use twitter_db;
-
-DELETE FROM users WHERE email = 'hasnaa8976@gmail.com';
+CREATE TABLE tweets (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    tweet_content VARCHAR(300),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    like_count INT DEFAULT 0,
+    retweet_count INT DEFAULT 0,
+    comment_count INT DEFAULT 0,
+    view_count INT DEFAULT 0,
+    created_by INT,
+    media_count INT DEFAULT 0,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE TABLE media(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL ,
+    tweet_id INT NOT NULL,
+    url VARCHAR(100) NOT NULL,
+    public_id VARCHAR(100) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (tweet_id) REFERENCES tweets(id) ON DELETE CASCADE
+);

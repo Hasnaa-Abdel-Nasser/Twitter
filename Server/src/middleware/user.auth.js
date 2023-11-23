@@ -1,4 +1,4 @@
-import Jwt from "jsonwebtoken";
+import Jwt, { decode } from "jsonwebtoken";
 import {getUserData} from "../../database/models/user.model.js";
 import { AppError } from "../utils/response.error.js";
 import { catchError } from "./catch.errors.js";
@@ -15,7 +15,7 @@ export const userAuthentication = catchError(async (req, res, next) => {
       }
       return res.status(401).json({ message: "Invalid token" });
     } else {
-      let [user] = await getUserData(decoded.email);
+      let [user] = await getUserData(decoded.id);
       if (!user.length) return next(new AppError("Invalid Token", 401));
       if(user[0].password_changed_at){
         let password_changed_at = parseInt(user[0].password_changed_at.getTime() / 1000);

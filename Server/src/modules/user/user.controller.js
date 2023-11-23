@@ -6,12 +6,13 @@ import sendEmail from '../../utils/email.validation.js';
 import Jwt from "jsonwebtoken";
 import * as query from '../../../database/models/user.model.js';
 import cloudinary from "../../utils/cloudinary.js";
+import pool from "../../../database/dbConnection.js";
 
 export const register = catchError(async (req, res, next) => {
   try {
     const { name, email, password, birthDate } = req.body;
     // Check if the email already exists
-    const [existingUser] = await query.getUserData(email);
+    const [existingUser] = await pool.query(`SELECT * FROM users WHERE email = ?`,[email]);
     if (existingUser.length) return next(new AppError("This email already exists.", 400));
     const salt = await bcrypt.genSalt(+process.env.SALTROUNDS);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -52,26 +53,25 @@ export const verifyCode = catchError(async (req , res , next)=>{
     const [findUser] = await query.getUserCodeAndCreateTime(email , code);
     if(!findUser.length) return next(new AppError('Invalid code.' , 400));
     const isCodeValid = ifvalidateVerifyCode(findUser[0].create_code_time);
-    console.log(isCodeValid);
     if (!isCodeValid) {
       const newCode = customAlphabet("0123456789", 6)();
-      if(!await query.updateVerifyCode(email , newCode)){
-        return next(new AppError("Please try again another aime.", 500));
+      if(!await query.updateVerifyCode(findUser[0].id , newCode)){
+        return next(new AppError("Please try again another time.", 500));
       }
       return next(new AppError('Invalid code.', 400));
     }
-    if(!await query.createEmailVerified(email))   return next(new AppError("Please try again another aime.", 500));
+    if(!await query.createEmailVerified(findUser[0].id))   return next(new AppError("Please try again another aime.", 500));
     let username;
     while(true){
       username = createUsername(findUser[0].name);
       const [user] = await query.getUsername(username);
       if(!user.length){
-        await query.updateUsername(email , username);
+        await query.updateUsername(findUser[0].id , username);
         break;
       }
     }
     let token = Jwt.sign(
-      { email : email, username: username},
+      {id : findUser[0].id, email : email, username: username},
       process.env.JWT_SECRET,
       { expiresIn: "90d" }
     );
@@ -90,12 +90,14 @@ export const forgetPassword = catchError(async (req , res , next)=>{
   try{
     const {data} = req.body;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const [user] = emailRegex.test(data) ? await query.getUserData(data) : await query.getUsername(data);
+    const [user] = emailRegex.test(data) ? 
+                   await pool.query(`SELECT * FROM users WHERE email = ?`,[data]) :
+                   await query.getUsername(data);
     if(!user.length){
       return next(new AppError('Sorry, we could not find your account.', 400));
     }
     const code = customAlphabet("0123456789", 6)();
-    if (!await query.updateVerifyCode(user[0].email , code)){
+    if (!await query.updateVerifyCode(user[0].id , code)){
       return next(new AppError("Please try again another time.", 500));
     }
     await sendEmail({email:user[0].email,name: user[0].name,code,message:'We received a request to reset the password associated with this email address. If you made this request, Put this code to reset your password. If you didn\'t make this request, you can safely ignore this email.'});
@@ -110,7 +112,7 @@ export const changePassword = catchError(async (req , res , next)=>{
     const {password} = req.body;
     const salt = await bcrypt.genSalt(+process.env.SALTROUNDS);
     const hashedPassword = await bcrypt.hash(password, salt);
-    if(! await query.updatePassword(req.user.email , hashedPassword)){
+    if(! await query.updatePassword(req.user.id , hashedPassword)){
       return next(new AppError("Please try again another time.", 500));
     }
     res.status(200).json({message: 'Password changed successfully.'})
@@ -125,7 +127,7 @@ export const updateProfileData = catchError(async (req , res , next)=>{
     if(!isValidUrl(website)){
       return next(new AppError('Invalid website url' , 400));
     }
-    if(!await query.updateProfile(req.user.email , bio , website , location)){
+    if(!await query.updateProfile(req.user.id , bio , website , location)){
       return next(new AppError("Please try again another time.", 500));
     }
     res.status(200).json({message:'Update profile data successful.'});
@@ -144,7 +146,7 @@ export const uploadProfileImage = catchError(async (req , res , next)=>{
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: "users",
     });
-    if(!result.url || !await query.uploadImage(req.user.email , result.url , 'profile')){
+    if(!result.url || !await query.uploadImage(req.user.id , result.url , 'profile')){
       return next(new AppError("Please try again another time.", 500));
     }
     res.status(200).json({message : 'Upload profile image successful.'});
@@ -159,7 +161,7 @@ export const uploadProfileCover = catchError(async (req , res , next)=>{
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: "users",
     });
-    if(!result.url || !await query.uploadImage(req.user.email , result.url , 'cover')){
+    if(!result.url || !await query.uploadImage(req.user.id , result.url , 'cover')){
       return next(new AppError("Please try again another time.", 500));
     }
     res.status(200).json({message : 'Upload cover image successful.'});
@@ -173,6 +175,12 @@ export const logout = catchError(async (req , res , next)=>{
   res.status(200).json({ message: 'Logout successful' });
 });
 
+export const deleteAccount = catchError(async (req , res , next)=>{
+  if(!await query.deleteAccount(req.user.id)){
+    return next(new AppError("Please try again another time.", 500));
+  }
+  res.status(200).json({message : 'Delete account successful'});
+})
 function createUsername(name){
   const cleanedName = name.split(' ')[0];
   const randomSuffix = Math.floor(Math.random() * 1000);
