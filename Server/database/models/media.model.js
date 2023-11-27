@@ -19,6 +19,5 @@ export const getMedia = async (mediaId)=>{
 }
 
 function successQuery (media){
-    if(media.affectedRows) return true;
-    return false;
+    return media.affectedRows > 0;
 }

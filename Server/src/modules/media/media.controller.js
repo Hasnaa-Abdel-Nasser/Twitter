@@ -9,7 +9,8 @@ export const uploadTweetMedia = catchError(async(req , res , next)=>{
         const {media} = req.files;
         const {tweetId} = req.body;
         // Check if the tweet exists
-        const [tweet] = await tweetQuery.getTweet(tweetId);
+        const tweet = await tweetQuery.getTweet(tweetId);
+
         if(!tweet.length) return next(new AppError('Tweet not found' , 400));
         // Check the number of media files
         if(!media || tweet[0].media_count >= 4 || media.length > 4){
@@ -25,7 +26,7 @@ export const uploadTweetMedia = catchError(async(req , res , next)=>{
         await query.updateMediaCount(tweetId, media.length);
         res.status(200).json({message : 'Media upload successful'});
     }catch(error){
-        next(new AppError({ message: error.message }, 500));
+        next(new AppError(error.message , 500));
     }
 });
 
@@ -42,6 +43,6 @@ export const deleteTweetMedia = catchError(async(req , res , next)=>{
         await query.updateMediaCount(media[0].tweet_id , -1);         // Update the media count for the associated tweet
         res.status(200).json({ message: 'Media deletion successful.' });
     }catch(error){
-        next(new AppError({ message: error.message }, 500));
+        next(new AppError(error.message , 500));
     }
 });

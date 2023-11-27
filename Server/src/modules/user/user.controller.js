@@ -135,10 +135,6 @@ export const updateProfileData = catchError(async (req , res , next)=>{
     next(new AppError({ message: error.message }, 500));
   }
 });
-// create after follow table
-export const updateFollowingNumber = catchError(async (req , res , next)=>{
-
-});
 
 export const uploadProfileImage = catchError(async (req , res , next)=>{
   try{

@@ -13,4 +13,21 @@ tweetRouter.post(
   method.createTweet
 );
 
+tweetRouter.patch(
+  "/content",
+  userAuthentication,
+  method.editTweetContent
+);
+
+tweetRouter.get(
+  "/",
+  userAuthentication,
+  method.getUserTweets
+);
+
+tweetRouter.delete(
+  "/delete/:id",
+  userAuthentication,
+  method.deleteTweet
+);
 export default tweetRouter;

@@ -1,4 +1,5 @@
 use twitter_db;
+SELECT * FROM tweets;
 CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     email VARCHAR(50) UNIQUE NOT NULL,
@@ -13,30 +14,74 @@ CREATE TABLE users (
     bio VARCHAR(100),
     location VARCHAR(50),
     website VARCHAR(100),
+    verified TINYINT(1) DEFAULT 0,
     email_verified TINYINT(1) DEFAULT 0,
     code VARCHAR(6),
     password_changed_at DATETIME,
     create_code_time DATETIME
 );
 
-CREATE TABLE tweets (
+CREATE TABLE tweets ( -- is posts or comments or retweets with quote
     id INT PRIMARY KEY AUTO_INCREMENT,
+    created_by INT NOT NULL,
     tweet_content VARCHAR(300),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     like_count INT DEFAULT 0,
     retweet_count INT DEFAULT 0,
     comment_count INT DEFAULT 0,
     view_count INT DEFAULT 0,
-    created_by INT,
     media_count INT DEFAULT 0,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+    is_retweet BOOLEAN DEFAULT false,
+    is_comment BOOLEAN DEFAULT false,
+    original_tweet_id INT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (original_tweet_id) REFERENCES tweets(id) ON DELETE SET NULL
 );
+
+
+CREATE TABLE retweets(
+    created_by INT,
+    tweet_id INT,
+    retweet_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(created_by,tweet_id),
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (tweet_id) REFERENCES tweets(id) ON DELETE CASCADE
+);
+
+
 CREATE TABLE media(
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL ,
     tweet_id INT NOT NULL,
     url VARCHAR(100) NOT NULL,
     public_id VARCHAR(100) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (tweet_id) REFERENCES tweets(id) ON DELETE CASCADE
+);
+
+CREATE TABLE follow(
+    following_id INT,
+    follower_id INT,
+    follow_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(following_id,follower_id),
+    FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE TABLE likes(
+    user_id INT ,
+    tweet_id INT,
+    like_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(user_id,tweet_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (tweet_id) REFERENCES tweets(id) ON DELETE CASCADE
+);
+
+CREATE TABLE bookmarks(
+    user_id INT ,
+    tweet_id INT,
+    added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(user_id,tweet_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (tweet_id) REFERENCES tweets(id) ON DELETE CASCADE
 );
