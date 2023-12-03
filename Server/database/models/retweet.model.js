@@ -1,4 +1,5 @@
 import pool from "../dbConnection.js";
+import { newHashtags } from "./trend.model.js";
 
 export const alreadyRetweet = async (userId, tweetId) => {
   const [retweet] = await pool.query(
@@ -42,7 +43,6 @@ export const updateTweetRetweets = async (num, tweetId) => {
     `UPDATE tweets SET retweet_count = retweet_count + ? WHERE id=?;`,
     [num, tweetId]
   );
-  console.log(tweet);
   return successQuery(tweet);
 };
 
@@ -52,6 +52,11 @@ export const quote = async (userId, tweetId, content, mediaCount) => {
                                       VALUES (?,?,?,?,?);`,
     [userId, tweetId, content, mediaCount, 1]
   );
+  const [tweet] = await pool.query(`SELECT LAST_INSERT_ID() AS last_inserted_tweet_id;`);
+  if(content){
+    await newHashtags(tweet[0].last_inserted_tweet_id, content);
+  }
+  await updateTweetRetweets(1 , tweetId);
   return successQuery(quote);
 };
 

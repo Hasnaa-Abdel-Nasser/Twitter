@@ -35,6 +35,19 @@ export const editTweetContent = catchError(async (req, res, next) => {
     }
 });
 
+export const editTweetViews = catchError(async (re1 , res , next)=>{
+  try{
+    const {id} = req.params;
+    const success = await query.editViewsNumber(id);
+    if(!success){
+      return next(new AppError("Please try again later." , 400));
+    }
+    res.status(200).json({message : "Add to views"});
+  }catch(error){
+    next(new AppError(error.message , 500));
+  }
+});
+
 export const getUserTweets = catchError(async (req , res , next)=>{
   try{
     const tweets = await query.getAllTweetsAndQuotes(req.user.id);
@@ -49,7 +62,7 @@ export const deleteTweet = catchError(async (req , res , next)=>{
     const {id} = req.params;
     const success = await query.deleteTweet(req.user.id , id);
     if(!success){
-      return next(new AppError("Unable to edit the tweet. Please try again later." , 400));
+      return next(new AppError("Unable to delete the tweet. Please try again later." , 400));
     }
     res.status(200).json({message : "Tweet deleted successfully"});
   }catch(error){

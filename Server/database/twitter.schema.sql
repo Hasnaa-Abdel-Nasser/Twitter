@@ -39,7 +39,6 @@ CREATE TABLE tweets ( -- is posts or comments or retweets with quote
     FOREIGN KEY (original_tweet_id) REFERENCES tweets(id) ON DELETE SET NULL
 );
 
-
 CREATE TABLE retweets(
     created_by INT,
     tweet_id INT,
@@ -84,4 +83,39 @@ CREATE TABLE bookmarks(
     PRIMARY KEY(user_id,tweet_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (tweet_id) REFERENCES tweets(id) ON DELETE CASCADE
+);
+CREATE TABLE hashtags (
+    hashtag_id INT AUTO_INCREMENT PRIMARY KEY,
+    tweet_id INT,
+    hashtag VARCHAR(20),
+    FOREIGN KEY (tweet_id) REFERENCES tweets(id) ON DELETE CASCADE
+);
+
+use twitter_db;
+CREATE TABLE lists(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    created_by INT NOT NULL, 
+    list_name VARCHAR(25) NOT NULL,
+    description VARCHAR(100),
+    list_state BOOLEAN DEFAULT true,
+    photo_url VARCHAR(100),
+    photo_public_id VARCHAR(100) NOT NULL,
+    members_number INT DEFAULT 1,
+    followers INT DEFAULT 0
+);
+
+CREATE TABLE list_followers(
+    list_id INT,
+    user_id INT,
+    PRIMARY KEY(list_id,user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE
+);
+
+CREATE TABLE list_members(
+    list_id INT,
+    member_id INT,
+    PRIMARY KEY(list_id,member_id),
+    FOREIGN KEY (member_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE
 );

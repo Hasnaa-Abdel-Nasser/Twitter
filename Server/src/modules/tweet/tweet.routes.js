@@ -25,6 +25,11 @@ tweetRouter.get(
   method.getUserTweets
 );
 
+tweetRouter.patch(
+  "/:id",
+  method.editTweetViews
+);
+
 tweetRouter.delete(
   "/delete/:id",
   userAuthentication,

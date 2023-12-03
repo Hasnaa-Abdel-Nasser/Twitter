@@ -32,11 +32,11 @@ export const quote = catchError(async (req, res, next) => {
 });
 
 export const getUserRetweetsAndQuotes = catchError(async (req, res, next) => {
-  try {
-    const allRetweets = await query.userRetweetsAndQuotes(req.user.id);
-    res.status(200).json({retweets : allRetweets || []});
-  } catch (error) {
-    next(new AppError(error.message, 500));
-  }
+  // try {
+  //   const allRetweets = await query.userRetweetsAndQuotes(req.user.id);
+  //   res.status(200).json({retweets : allRetweets || []});
+  // } catch (error) {
+  //   next(new AppError(error.message, 500));
+  // }
 });
 
