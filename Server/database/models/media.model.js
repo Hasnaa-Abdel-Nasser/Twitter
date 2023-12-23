@@ -1,7 +1,7 @@
 import pool from "../dbConnection.js";
 
 export const updateMediaCount = async (tweetId , mediaCount)=>{
-    const [tweet] = await pool.query(`UPDATE tweets SET media_count = media_count + ? WHERE id = ?`, [mediaCount , tweetId]);
+    const [tweet] = await pool.query(`UPDATE tweets SET media_count = media_count + ? WHERE id = ? AND media_count + ? >= 0`, [mediaCount , tweetId]);
     return successQuery(tweet);
 }
 
@@ -18,6 +18,4 @@ export const getMedia = async (mediaId)=>{
     return await pool.query(`SELECT * FROM media WHERE id=?` , [mediaId]);
 }
 
-function successQuery (media){
-    return media.affectedRows > 0;
-}
+const successQuery = (media) => media.affectedRows > 0;

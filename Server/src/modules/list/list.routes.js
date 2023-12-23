@@ -17,27 +17,15 @@ listRouter.patch(
 );
 
 listRouter.patch(
-    "/state",
+    "/follow/:id",
     userAuthentication,
-    method.editListState
-);
-
-listRouter.delete(
-    "/remove-photo/:id",
-    userAuthentication,
-    method.removeListPhoto
+    method.manageFollowingList
 );
 
 listRouter.patch(
     "/member",
     userAuthentication,
-    method.manageMemberList
-);
-
-listRouter.patch(
-    "/follow",
-    userAuthentication,
-    method.manageFollowList
+    method.manageMembersList
 );
 
 listRouter.get(
@@ -47,7 +35,7 @@ listRouter.get(
 );
 
 listRouter.delete(
-    "/:id",
+    "/delete/:id",
     userAuthentication,
     method.deleteList
 );

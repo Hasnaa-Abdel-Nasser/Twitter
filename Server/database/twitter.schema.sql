@@ -1,5 +1,3 @@
-use twitter_db;
-SELECT * FROM tweets;
 CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     email VARCHAR(50) UNIQUE NOT NULL,
@@ -91,7 +89,6 @@ CREATE TABLE hashtags (
     FOREIGN KEY (tweet_id) REFERENCES tweets(id) ON DELETE CASCADE
 );
 
-use twitter_db;
 CREATE TABLE lists(
     id INT PRIMARY KEY AUTO_INCREMENT,
     created_by INT NOT NULL, 
@@ -99,8 +96,8 @@ CREATE TABLE lists(
     description VARCHAR(100),
     list_state BOOLEAN DEFAULT true,
     photo_url VARCHAR(100),
-    photo_public_id VARCHAR(100) NOT NULL,
-    members_number INT DEFAULT 1,
+    photo_public_id VARCHAR(100),
+    members_number INT DEFAULT 0,
     followers INT DEFAULT 0
 );
 
@@ -118,4 +115,14 @@ CREATE TABLE list_members(
     PRIMARY KEY(list_id,member_id),
     FOREIGN KEY (member_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE
+);
+
+CREATE TABLE notifications(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT,
+    send_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    message VARCHAR(50) NOT NULL,
+    notification_type VARCHAR(50) NOT NULL,
+    image_url VARCHAR(100),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

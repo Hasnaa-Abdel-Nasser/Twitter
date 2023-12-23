@@ -15,25 +15,25 @@ export const alreadyLike = async (userId, tweetId) => {
 
 const cancelLike = async (userId, tweetId) => {
   const [like] = await pool.query(`DELETE FROM likes WHERE user_id=? AND tweet_id=?;`,[userId, tweetId]);
-  await updateTweetLikes(-1, tweetId);
-  return {
-    state: successQuery(like),
-    message: "Cancel like successfully",
-  };
+  successQuery(like) && await updateTweetLikes(-1, tweetId);
+  return successQuery(like)
+    ? {success: true , message: "Cancel your like successfully." } 
+    : {success: false , message:"Failed unlike on tweet. Please try again later."};
 };
 
 const addLike = async (userId, tweetId) => {
   const [like] = await pool.query(`INSERT INTO likes (user_id, tweet_id) VALUES(?,?);`,[userId, tweetId]);
-  await updateTweetLikes(1, tweetId);
-  return { state: successQuery(like), message: "like successfully" };
+  successQuery(like) && await updateTweetLikes(1, tweetId);
+  return successQuery(like)
+    ? {success: true , message: "like on tweet successfully." } 
+    : {success: false , message:"Failed to like on tweet. Please try again later."};
 };
 
 export const updateTweetLikes = async (num, tweetId) => {
-  const [like] = await pool.query(`UPDATE tweets SET like_count = like_count + ? WHERE id=?;`,[num, tweetId]);
+  const [like] = await pool.query(`UPDATE tweets SET like_count = like_count + ? WHERE id=? AND like_count + ? >= 0;`,[num, tweetId , num]);
   console.log(like);
   return successQuery(like);
 };
 
-function successQuery(like) {
-  return like.affectedRows > 0;
-}
+const successQuery = (like) => like.affectedRows > 0;
+
