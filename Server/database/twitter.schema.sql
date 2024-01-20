@@ -35,6 +35,7 @@ CREATE TABLE tweets ( -- is posts or comments or retweets with quote
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (original_tweet_id) REFERENCES tweets(id) ON DELETE SET NULL
 );
+
 CREATE TABLE retweets(
     created_by INT,
     tweet_id INT,
@@ -43,7 +44,6 @@ CREATE TABLE retweets(
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (tweet_id) REFERENCES tweets(id) ON DELETE CASCADE
 );
-
 
 CREATE TABLE media(
     id INT PRIMARY KEY AUTO_INCREMENT,

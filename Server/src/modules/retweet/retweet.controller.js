@@ -12,7 +12,7 @@ export const retweet = catchError(async (req, res, next) => {
 });
 
 export const quote = catchError(async (req, res, next) => {
-  const { tweetId, content , canRetweet} = req.body;
+  const { tweetId, content , canRetweet ='everyone'} = req.body;
   if (!content) {
     return next(new AppError("Can't create an empty tweet."));
   }

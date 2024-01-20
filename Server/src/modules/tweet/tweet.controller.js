@@ -3,7 +3,8 @@ import { AppError } from "../../utils/response.error.js";
 import { catchError } from "../../middleware/catch.errors.js";
 
 export const createTweet = catchError(async (req, res, next) => {
-  const { content , canRetweet} = req.body;
+  const { content , canRetweet = 'everyone'} = req.body;
+  console.log(canRetweet)
   if (!content ) {
     return next(new AppError("Can't create an empty tweet."));
   }
@@ -17,7 +18,7 @@ export const createTweet = catchError(async (req, res, next) => {
 });
 
 export const editTweet = catchError(async (req, res, next) => {
-  const { tweetId, content , canRetweet} = req.body;
+  const { tweetId, content , canRetweet = 'everyone'} = req.body;
   const foundTweet = await query.getTweet(tweetId);
 
   if (!foundTweet.length) {
