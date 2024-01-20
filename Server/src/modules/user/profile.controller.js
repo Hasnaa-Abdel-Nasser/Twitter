@@ -1,7 +1,7 @@
 import { AppError } from "../../utils/response.error.js";
 import { catchError } from "../../middleware/catch.errors.js";
 import * as query from "../../../database/models/user.model.js";
-import cloudinary from "../../utils/cloudinary.js";
+import { uploadToCloudinary } from "../../utils/files.uploads.js";
 
 export const updateProfileData = catchError(async (req, res, next) => {
   if (req.body.website && !isValidUrl(req.body.website)) {
@@ -18,29 +18,15 @@ export const updateProfileData = catchError(async (req, res, next) => {
 
 export const uploadProfileImage = catchError(async (req, res, next) => {
   if (!req.file) return next(new AppError("Please upload profile image.", 400));
-  const result = await cloudinary.uploader.upload(req.file.path, {
-    folder: "users",
-  });
-  if (
-    !result.url ||
-    (await query.uploadImage(req.user.id, result.url, "profile"))
-  ) {
-    return next(new AppError("Please try again another time.", 500));
-  }
+  const {url} = await uploadToCloudinary(req.file.path , "users");
+  await query.uploadImage(req.user.id, url, "profile");
   res.status(200).json({ message: "Upload profile image successful." });
 });
 
 export const uploadProfileCover = catchError(async (req, res, next) => {
   if (!req.file) return next(new AppError("Please upload cover image.", 400));
-  const result = await cloudinary.uploader.upload(req.file.path, {
-    folder: "users",
-  });
-  if (
-    !result.url ||
-    !(await query.uploadImage(req.user.id, result.url, "cover"))
-  ) {
-    return next(new AppError("Please try again another time.", 500));
-  }
+  const {url} = await uploadToCloudinary(req.file.path , "users");
+  await query.uploadImage(req.user.id, url, "cover")
   res.status(200).json({ message: "Upload cover image successful." });
 });
 

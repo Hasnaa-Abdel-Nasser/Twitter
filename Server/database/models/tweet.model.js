@@ -2,18 +2,22 @@ import pool from "../dbConnection.js";
 import { getQuotes , updateTweetRetweets} from "./retweet.model.js";
 import { newHashtags } from "./trend.model.js";
 import {updateTweetComments} from "./comment.model.js";
-
+import {uploadMedia} from './media.model.js';
 export const getTweet = async (id) => {
   const [tweet] = await pool.query(`SELECT * FROM tweets WHERE id = ? AND tweet_type = 'tweet';`,[id]);
   return tweet;
 };
 
-export const createTweet = async (userId, content , canRetweet) => {
+export const createTweet = async (userId, content , canRetweet , media) => {
   const [tweet] = await pool.query(`INSERT INTO tweets (content  , created_by , can_retweet) 
                                     VALUES(? , ? , ?);`,[content, userId , canRetweet]);
+  let [tweetId] = await pool.query(`SELECT LAST_INSERT_ID() AS last_inserted_tweet_id;`);
+  tweetId = tweetId[0].last_inserted_tweet_id;
   if(content){
-    const [tweetId] = await pool.query(`SELECT LAST_INSERT_ID() AS last_inserted_tweet_id;`);
-    await newHashtags(tweetId[0].last_inserted_tweet_id , content);
+    await newHashtags( tweetId, content);
+  }
+  if(media){
+    await uploadMedia(userId , tweetId , media);
   }
   return successQuery(tweet);
 };

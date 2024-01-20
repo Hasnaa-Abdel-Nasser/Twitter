@@ -1,6 +1,7 @@
 import * as query from "../../../database/models/list.model.js";
 import { AppError } from "../../utils/response.error.js";
 import { catchError } from "../../middleware/catch.errors.js";
+import { uploadToCloudinary } from "../../utils/files.uploads.js";
 
 export const createNewList = catchError(async(req , res , next)=>{
   const {listName , description , listState=true} = req.body;
@@ -9,6 +10,19 @@ export const createNewList = catchError(async(req , res , next)=>{
     return next(new AppError(message , 400));
   }
   res.status(200).json({message});
+});
+
+export const uploadListImage = catchError(async(req , res , next)=>{
+  if (!req.file) return next(new AppError("Please upload list cover.", 400));
+  const {id} = req.body;
+
+  const {url , publicId} = await uploadToCloudinary(req.file.path , "list");
+
+  const success = await query.listCover(id , req.user.id , url , publicId);
+  if(!success){
+    return next(new AppError("Please try again later." , 400));
+  }
+  res.status(200).json({ message: "Upload cover image successful." });
 });
 
 export const editListInfo = catchError(async (req , res , next)=>{

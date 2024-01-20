@@ -88,4 +88,9 @@ export const deleteList = async(id , userId)=>{
   : { success: false, message: 'Failed to delete the list. Please try again later.' };
 };
 
+export const listCover = async(id , userId , url , public_id)=>{
+  const [list] = await pool.query(`UPDATE users SET photo_url = ? , photo_public_id = ? WHERE id=? AND created_by = ?` , [url , public_id , id , userId]);
+  return successQuery(list);
+};
+
 const successQuery = (list) => list.affectedRows > 0;

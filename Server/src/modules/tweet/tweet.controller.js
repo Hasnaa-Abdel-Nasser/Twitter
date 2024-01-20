@@ -4,11 +4,11 @@ import { catchError } from "../../middleware/catch.errors.js";
 
 export const createTweet = catchError(async (req, res, next) => {
   const { content , canRetweet = 'everyone'} = req.body;
-  console.log(canRetweet)
-  if (!content ) {
-    return next(new AppError("Can't create an empty tweet."));
+
+  if (content.length === 0 && !req.files.media) {
+    return next(new AppError("Can't create an empty tweet." , 400));
   }
-  const success = await query.createTweet(req.user.id, content , canRetweet);
+  const success = await query.createTweet(req.user.id, content , canRetweet , req.files.media);
 
   if (!success) {
     return next(new AppError("Failed to create the tweet. Please try again later.", 400));

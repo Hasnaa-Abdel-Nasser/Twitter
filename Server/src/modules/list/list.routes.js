@@ -3,6 +3,8 @@ import * as method from "./list.controller.js";
 import { userAuthentication } from "../../middleware/user.auth.js";
 import { validation } from "../../middleware/validation.js";
 import * as dataValidation from "./list.validation.js";
+import { SingleFile } from "../../utils/files.uploads.js";
+
 const listRouter = new Router();
 
 listRouter.post(
@@ -10,6 +12,13 @@ listRouter.post(
     userAuthentication,
     validation(dataValidation.newList),
     method.createNewList
+);
+
+listRouter.put(
+    "/cover",
+    userAuthentication,
+    SingleFile("image"),
+    method.uploadListImage
 );
 
 listRouter.patch(
@@ -43,4 +52,5 @@ listRouter.delete(
     userAuthentication,
     method.deleteList
 );
+
 export default listRouter;
