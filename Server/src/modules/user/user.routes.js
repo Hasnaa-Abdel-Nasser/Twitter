@@ -1,5 +1,6 @@
 import { Router } from "express";
-import * as method from "./user.controller.js";
+import * as method from "./auth.controller.js";
+import * as profile from "./profile.controller.js";
 import { validation } from "../../middleware/validation.js";
 import * as dataValidation from "./user.validation.js";
 import { userAuthentication } from "../../middleware/user.auth.js";
@@ -18,6 +19,7 @@ authRouter.post(
 );
 authRouter.post(
     "/verify", 
+    validation(dataValidation.verifyCode),
     method.verifyCode
 );
 authRouter.post(
@@ -33,24 +35,25 @@ authRouter.patch(
   "/profile-image",
   userAuthentication,
   SingleFile("image"),
-  method.uploadProfileImage
+  profile.uploadProfileImage
 );
 authRouter.patch(
   "/cover-image",
   userAuthentication,
   SingleFile("image"),
-  method.uploadProfileImage
+  profile.uploadProfileImage
 );
 authRouter.put(
     "/profile-data", 
     userAuthentication, 
-    method.updateProfileData
+    validation(dataValidation.profileData),
+    profile.updateProfileData
 );
 authRouter.get(
     "/logout",
     method.logout
 );
-authRouter.get(
+authRouter.delete(
   "/delete-account",
   method.deleteAccount
 );

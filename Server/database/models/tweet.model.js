@@ -8,9 +8,9 @@ export const getTweet = async (id) => {
   return tweet;
 };
 
-export const createTweet = async (userId, content, mediaCount) => {
-  const [tweet] = await pool.query(`INSERT INTO tweets (tweet_content , media_count , created_by) 
-                                    VALUES(? , ? , ?);`,[content, mediaCount, userId]);
+export const createTweet = async (userId, content) => {
+  const [tweet] = await pool.query(`INSERT INTO tweets (tweet_content  , created_by) 
+                                    VALUES(? , ? , ?);`,[content, userId]);
   if(content){
     const [tweetId] = await pool.query(`SELECT LAST_INSERT_ID() AS last_inserted_tweet_id;`);
     await newHashtags(tweetId[0].last_inserted_tweet_id , content);

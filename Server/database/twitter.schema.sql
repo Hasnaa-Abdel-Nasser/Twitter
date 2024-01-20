@@ -27,7 +27,6 @@ CREATE TABLE tweets ( -- is posts or comments or retweets with quote
     retweet_count INT DEFAULT 0,
     comment_count INT DEFAULT 0,
     view_count INT DEFAULT 0,
-    media_count INT DEFAULT 0,
     is_retweet BOOLEAN DEFAULT false,
     is_comment BOOLEAN DEFAULT false,
     original_tweet_id INT,

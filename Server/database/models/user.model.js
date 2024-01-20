@@ -50,8 +50,8 @@ export const uploadImage = async (id, url, imageTitle) => {
   }
 };
 
-export const updateProfile = async (id, bio, website, location) => {
-  const [user] = await pool.query(`UPDATE users SET bio = ? , location=? , website=? WHERE id=?`,[bio, location, website, id]);
+export const updateProfile = async ({id, name , birth_date , bio, website, location}) => {
+  const [user] = await pool.query(`UPDATE users SET name = ? , birth_date=?, bio = ? , location=? , website=? WHERE id=?`,[name , birth_date, bio, location, website, id]);
   return successQuery(user);
 };
 

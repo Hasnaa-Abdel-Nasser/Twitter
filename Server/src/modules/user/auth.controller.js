@@ -5,14 +5,16 @@ import { customAlphabet } from "nanoid";
 import sendEmail from "../../utils/email.validation.js";
 import Jwt from "jsonwebtoken";
 import * as query from "../../../database/models/user.model.js";
-import cloudinary from "../../utils/cloudinary.js";
 import pool from "../../../database/dbConnection.js";
 
 export const register = catchError(async (req, res, next) => {
   const { name, email, password, birthDate } = req.body;
   // Check if the email already exists
-  const [existingUser] = await pool.query(`SELECT * FROM users WHERE email = ?`,[email]);
-  if (existingUser.length){
+  const [existingUser] = await pool.query(
+    `SELECT * FROM users WHERE email = ?`,
+    [email]
+  );
+  if (existingUser.length) {
     return next(new AppError("This email already exists.", 400));
   }
   const salt = await bcrypt.genSalt(+process.env.SALTROUNDS);
@@ -20,7 +22,9 @@ export const register = catchError(async (req, res, next) => {
   // Generate a unique code
   const code = customAlphabet("0123456789", 6)();
   // Insert the new user into the database
-  if (!(await query.insertNewUser(name, email, hashedPassword, birthDate, code))) {
+  if (
+    !(await query.insertNewUser(name, email, hashedPassword, birthDate, code))
+  ) {
     next(new AppError("Please try again another time.", 500));
   }
   await sendEmail({ email, name, code, emailType: "register" });
@@ -42,44 +46,74 @@ export const login = catchError(async (req, res, next) => {
 });
 
 export const verifyCode = catchError(async (req, res, next) => {
-  const { email, code } = req.body;
-  const [findUser] = await query.getUserCodeAndCreateTime(email, code);
-  if (!findUser.length){ 
-    return next(new AppError("Invalid code.", 400));
-  }
-  const isCodeValid = ifvalidateVerifyCode(findUser[0].create_code_time);
-  if (!isCodeValid) {
-    const newCode = customAlphabet("0123456789", 6)();
-    if (!(await query.updateVerifyCode(findUser[0].id, newCode))) {
-      return next(new AppError("Please try again another time.", 500));
+  try {
+    const { email, code } = req.body;
+
+    // Check if the user exists with the provided code
+    const [findUser] = await query.getUserCodeAndCreateTime(email, code);
+
+    if (!findUser.length) {
+      return next(new AppError("Invalid code.", 400));
     }
-    return next(new AppError("Invalid code.", 400));
-  }
-  if (!(await query.createEmailVerified(findUser[0].id))){
-    return next(new AppError("Please try again another aime.", 500));
-  }
-  let username;
-  while (true) {
-    username = createUsername(findUser[0].name);
-    const [user] = await query.getUsername(username);
-    if (!user.length) {
-      await query.updateUsername(findUser[0].id, username);
-      break;
+
+    // Check if the code is still valid
+    const isCodeValid = ifvalidateVerifyCode(findUser[0].create_code_time);
+
+    if (!isCodeValid) {
+      // If not valid, generate a new code
+      const newCode = customAlphabet("0123456789", 6)();
+
+      // Update the user's code
+      if (!(await query.updateVerifyCode(findUser[0].id, newCode))) {
+        return next(new AppError("Please try again another time.", 500));
+      }
+
+      return next(new AppError("Invalid code. New code sent.", 400));
     }
+
+    // Mark the user as email verified
+    if (!(await query.createEmailVerified(findUser[0].id))) {
+      return next(
+        new AppError("Failed to verify email. Please try again.", 500)
+      );
+    }
+
+    // Generate a unique username for the user
+    let username;
+    while (true) {
+      username = createUsername(findUser[0].name);
+      const [user] = await query.getUsername(username);
+      if (!user.length) {
+        await query.updateUsername(findUser[0].id, username);
+        break;
+      }
+    }
+
+    // Generate and sign a JWT token
+    const tokenPayload = { id: findUser[0].id, email, username };
+    const token = Jwt.sign(tokenPayload, process.env.JWT_SECRET, {
+      expiresIn: "90d",
+    });
+
+    // Set the token as a cookie
+    const cookieOptions = {
+      expiresIn: new Date(
+        Date.now() + process.env.COOKIE_EXPIRES * 24 * 60 * 60 * 1000
+      ),
+      httpOnly: true,
+    };
+    res.cookie("auth_token", token, cookieOptions);
+
+    res.status(200).json({ message: "Verification successful. Token set." });
+  } catch (error) {
+    // Handle unexpected errors
+    console.error(error);
+    return next(new AppError("An unexpected error occurred.", 500));
   }
-  let token = Jwt.sign({ id: findUser[0].id, email: email, username: username },process.env.JWT_SECRET,{ expiresIn: "90d" });
-  const cookieOperations = {
-    expiresIn: new Date(
-      Date.now() + process.env.COOKIE_EXPIRES * 24 * 60 * 60 * 1000
-    ),
-    httpOnly: true,
-  };
-  res.cookie("auth_token", token, cookieOperations);
-  res.status(200).json({ message: "Verification email sent successfully." });
 });
 
 export const forgetPassword = catchError(async (req, res, next) => {
-  const { data } = req.body;
+  const { data } = req.body; //data is email or username
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const [user] = emailRegex.test(data)
     ? await pool.query(`SELECT * FROM users WHERE email = ?`, [data])
@@ -110,35 +144,6 @@ export const changePassword = catchError(async (req, res, next) => {
   res.status(200).json({ message: "Password changed successfully." });
 });
 
-export const updateProfileData = catchError(async (req, res, next) => {
-  const { bio = "", website = "", location = "" } = req.body;
-  if (!isValidUrl(website)) {
-    return next(new AppError("Invalid website url", 400));
-  }
-  if (!(await query.updateProfile(req.user.id, bio, website, location))) {
-    return next(new AppError("Please try again another time.", 500));
-  }
-  res.status(200).json({ message: "Update profile data successful." });
-});
-
-export const uploadProfileImage = catchError(async (req, res, next) => {
-  if (!req.file) return next(new AppError("Please upload profile image.", 400));
-  const result = await cloudinary.uploader.upload(req.file.path, {folder: "users",});
-  if (!result.url ||(await query.uploadImage(req.user.id, result.url, "profile"))) {
-    return next(new AppError("Please try again another time.", 500));
-  }
-  res.status(200).json({ message: "Upload profile image successful." });
-});
-
-export const uploadProfileCover = catchError(async (req, res, next) => {
-  if (!req.file) return next(new AppError("Please upload cover image.", 400));
-  const result = await cloudinary.uploader.upload(req.file.path, {folder: "users"});
-  if (!result.url ||!(await query.uploadImage(req.user.id, result.url, "cover"))) {
-    return next(new AppError("Please try again another time.", 500));
-  }
-  res.status(200).json({ message: "Upload cover image successful." });
-});
-
 export const logout = catchError(async (req, res, next) => {
   res.clearCookie("auth_token");
   res.status(200).json({ message: "Logout successful" });
@@ -163,12 +168,4 @@ function ifvalidateVerifyCode(updatedAt) {
   const minutesDifference = Math.floor(timeDifference / (1000 * 60));
   console.log(minutesDifference);
   return minutesDifference <= 2;
-}
-function isValidUrl(url) {
-  try {
-    new URL(url);
-    return true;
-  } catch (error) {
-    return false;
-  }
 }
