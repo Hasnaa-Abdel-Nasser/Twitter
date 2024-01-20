@@ -22,20 +22,19 @@ CREATE TABLE users (
 CREATE TABLE tweets ( -- is posts or comments or retweets with quote
     id INT PRIMARY KEY AUTO_INCREMENT,
     created_by INT NOT NULL,
-    tweet_content VARCHAR(300),
+    content VARCHAR(300),
     like_count INT DEFAULT 0,
     retweet_count INT DEFAULT 0,
     comment_count INT DEFAULT 0,
     view_count INT DEFAULT 0,
-    is_retweet BOOLEAN DEFAULT false,
-    is_comment BOOLEAN DEFAULT false,
+    tweet_type ENUM('tweet' , 'comment' , 'retweet') DEFAULT 'tweet',
     original_tweet_id INT,
+    can_retweet ENUM('everyone', 'accounts_follow', 'verified_accounts', 'only_mention') DEFAULT 'everyone',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (original_tweet_id) REFERENCES tweets(id) ON DELETE SET NULL
 );
-
 CREATE TABLE retweets(
     created_by INT,
     tweet_id INT,
@@ -64,6 +63,7 @@ CREATE TABLE follow(
     FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
 CREATE TABLE likes(
     user_id INT ,
     tweet_id INT,

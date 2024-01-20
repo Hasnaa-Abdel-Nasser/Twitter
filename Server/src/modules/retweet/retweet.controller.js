@@ -12,11 +12,11 @@ export const retweet = catchError(async (req, res, next) => {
 });
 
 export const quote = catchError(async (req, res, next) => {
-  const { tweetId, content = "", mediaCount = 0 } = req.body;
-  if (!content && !mediaCount) {
+  const { tweetId, content , canRetweet} = req.body;
+  if (!content) {
     return next(new AppError("Can't create an empty tweet."));
   }
-  const {success , message} = await query.quote(req.user.id, tweetId, content, mediaCount);
+  const {success , message} = await query.quote(req.user.id, tweetId, content , canRetweet);
   if (!success) {
     return next(new AppError(message, 400));
   }

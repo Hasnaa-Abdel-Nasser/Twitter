@@ -34,9 +34,9 @@ export const updateTweetRetweets = async (num, tweetId) => {
   await pool.query(`UPDATE tweets SET retweet_count = retweet_count + ? WHERE id=? AND retweet_count + ? >= 0;`,[num, tweetId , num]);
 };
 
-export const quote = async (userId, tweetId, content, mediaCount) => {
-  const [quote] = await pool.query(`INSERT INTO tweets (created_by , original_tweet_id ,  tweet_content , media_count, is_retweet) 
-                                    VALUES (?,?,?,?,?);`,[userId, tweetId, content, mediaCount, 1]);
+export const quote = async (userId, tweetId, content , canRetweet) => {
+  const [quote] = await pool.query(`INSERT INTO tweets (created_by , original_tweet_id ,  content , tweet_type , can-retweet) 
+                                    VALUES (?,?,?,?,?);`,[userId, tweetId, content, 'retweet' , canRetweet]);
   const [tweet] = await pool.query(`SELECT LAST_INSERT_ID() AS last_inserted_tweet_id;`);
   if(content){
     await newHashtags(tweet[0].last_inserted_tweet_id, content);

@@ -4,13 +4,13 @@ import { newHashtags } from "./trend.model.js";
 import {updateTweetComments} from "./comment.model.js";
 
 export const getTweet = async (id) => {
-  const [tweet] = await pool.query(`SELECT * FROM tweets WHERE id = ? AND is_retweet = 0 AND is_comment = 0`,[id]);
+  const [tweet] = await pool.query(`SELECT * FROM tweets WHERE id = ? AND tweet_type = 'tweet';`,[id]);
   return tweet;
 };
 
-export const createTweet = async (userId, content) => {
-  const [tweet] = await pool.query(`INSERT INTO tweets (tweet_content  , created_by) 
-                                    VALUES(? , ? , ?);`,[content, userId]);
+export const createTweet = async (userId, content , canRetweet) => {
+  const [tweet] = await pool.query(`INSERT INTO tweets (content  , created_by , can_retweet) 
+                                    VALUES(? , ? , ?);`,[content, userId , canRetweet]);
   if(content){
     const [tweetId] = await pool.query(`SELECT LAST_INSERT_ID() AS last_inserted_tweet_id;`);
     await newHashtags(tweetId[0].last_inserted_tweet_id , content);
@@ -18,9 +18,9 @@ export const createTweet = async (userId, content) => {
   return successQuery(tweet);
 };
 
-export const editTweet = async (userId, tweetId, content) => {
+export const editTweet = async (userId, tweetId, content , canRetweet) => {
   const createTime = new Date();
-  const [tweet] = await pool.query(`UPDATE tweets SET tweet_content = ? , updated_at = ? WHERE id = ? AND created_by = ?`,[content, createTime, tweetId, userId]);
+  const [tweet] = await pool.query(`UPDATE tweets SET content = ? ,can_retweet=?, updated_at = ? WHERE id = ? AND created_by = ?`,[content,canRetweet, createTime, tweetId, userId]);
   return successQuery(tweet);
 };
 
@@ -38,7 +38,7 @@ export const userPosts = () => {
               'profileImage', users.profile_image,
               'verified', users.verified
             ) AS user,
-            tweet_content AS content ,
+            content ,
             like_count AS likes, 
             retweet_count AS retweets,
             comment_count AS comments,

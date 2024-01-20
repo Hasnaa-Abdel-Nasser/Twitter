@@ -16,7 +16,8 @@ tweetRouter.post(
 tweetRouter.patch(
   "/content",
   userAuthentication,
-  method.editTweetContent
+  validation(tweetValidation.editTweet),
+  method.editTweet
 );
 
 tweetRouter.get(
@@ -26,7 +27,7 @@ tweetRouter.get(
 );
 
 tweetRouter.patch(
-  "/:id",
+  "/views/:id",
   method.editTweetViews
 );
 
